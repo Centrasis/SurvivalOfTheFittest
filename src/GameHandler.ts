@@ -2,14 +2,8 @@ import { SpawnFactory, SpawnInfo, UpdateInfo } from "./SpawnFactory";
 import Worker from "worker-loader!./app.worker";
 import { Mesh } from "@babylonjs/core";
 import { Controller } from "./Controller";
-import { Action, ActionType, IGameHandler } from "./GameHandlerBase";
-
-export enum GameState {
-    UnReady,
-    Ready,
-    Playing,
-    Finished
-}
+import { Action, ActionType, GameRejectReason, GameState, SVEGame, SVEGameInfo } from "svegamesapi";
+import { SVEAccount } from "svebaselib";
 
 export enum HandlerRole {
     Host,
@@ -32,7 +26,7 @@ export interface GameEventMap {
     "update": MessageEvent;
 }
 
-export abstract class GameHandler implements IGameHandler {
+export abstract class GameHandler extends SVEGame {
     public spawnFactory: SpawnFactory;
     protected worker: Worker;
     protected stateListeners: ((state: GameState) => void)[] = [];
@@ -45,17 +39,16 @@ export abstract class GameHandler implements IGameHandler {
     protected activeController?: Controller = undefined;
     protected humanController?: Controller = undefined;
 
-    protected abstract handleIncoming(action: Action);
-
     getControllers(): any[] {
         return this.controllers;
     }
 
-    public getLocalPlayerName(): string {
+    public gethumanControllerName(): string {
         return (this.humanController === undefined) ? "" : this.humanController.getName();
     }
 
-    public constructor(worker: Worker) {
+    public constructor(player: SVEAccount, info: SVEGameInfo, worker: Worker) {
+        super(player, info);
         this.worker = worker;
         let self = this;
         /*this.worker.onmessage = function (event) {
@@ -101,12 +94,6 @@ export abstract class GameHandler implements IGameHandler {
     public addStateEventListener(listener: (ev: GameState) => void): void {
         this.stateListeners.push(listener);
     }
-
-    public abstract startGame(): Promise<void>;
-
-    public abstract handle(action: Action);
-
-    public abstract setReady();
 
     public abstract getRole(): HandlerRole;
 }
@@ -234,6 +221,14 @@ export class GameHandlerClient extends GameHandler {
         }
     }
 
+    protected onJoin() {
+        console.log("On JOIN!");
+    }
+
+    protected onAbort(reason: GameRejectReason) {
+        console.log("On ABORT! Reason: ", reason);
+    }
+
     public startGame(): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             if (this.state == GameState.UnReady)
@@ -273,6 +268,7 @@ export class GameHandlerClient extends GameHandler {
     }
 
     public handle(action: Action) {
+        super.handle(action);
         this.worker.postMessage(action);
     }
 }
@@ -304,7 +300,9 @@ export class GameHandlerHost extends GameHandlerClient {
                     type: ActionType.GameState,
                     info: GameState.Playing
                 } as Action);
-                resolve();
+                super.startGame().then(() => {
+                    resolve();
+                }, err => reject());
             } else {
                 setTimeout(() => {
                     this.startGame().then(() => resolve());

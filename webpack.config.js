@@ -4,6 +4,10 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const appDirectory = fs.realpathSync(process.cwd());
 const WebpackPwaManifest = require('webpack-pwa-manifest');
+const webpack = require('webpack');
+
+const isLocal = process.env.TERM_PROGRAM == 'vscode' && process.env.OS.includes("Windows");
+console.log("Build for local webpack-dev-server: ", isLocal);
 
 module.exports = {
     entry: path.resolve(appDirectory, "src/app.ts"),
@@ -19,9 +23,19 @@ module.exports = {
         host: 'localhost',
         port: 8080,
         disableHostCheck: true,
+        historyApiFallback: true,
+        watchOptions: { aggregateTimeout: 300, poll: 1000 },
+        disableHostCheck: true,
         contentBase: path.resolve(appDirectory, "public"), //tells webpack to serve from the public folder
         publicPath: '/',
-        hot: true
+        hot: true,
+        https: true,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Credentials": "true",
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+          "Access-Control-Allow-Headers": "X-Requested-With, content-type, Authorization"
+        }
     },
     module: {
         rules: [
@@ -54,6 +68,13 @@ module.exports = {
         new HtmlWebpackPlugin({
             inject: true,
             template: path.resolve(appDirectory, "public/index.html")
+        }),
+        new webpack.DefinePlugin({
+          'process.env.sveAPI': (isLocal) ? "'media.felixlehner.de'" : "undefined",
+          'process.env.authAPI': (isLocal) ? "'accounts.felixlehner.de/auth'" : "undefined",
+          'process.env.accountsAPI': (isLocal) ? "'accounts.felixlehner.de'" : "undefined",
+          'process.env.gameAPI': (isLocal) ? "'games.felixlehner.de'" : "undefined",
+          'process.env.aiAPI': (isLocal) ? "'ai.felixlehner.de'" : "undefined",
         }),
         new CleanWebpackPlugin(),
         new WebpackPwaManifest({

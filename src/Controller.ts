@@ -1,6 +1,5 @@
-import { GameState, GameInfo, SVEAccount, GameRequest } from 'svebaselib';
-import { IGameHandler } from './GameHandlerBase';
-
+import { SVEAccount } from 'svebaselib';
+import { IGameHandler } from 'svegamesapi';
 export abstract class Controller {
     public account: SVEAccount | string;
     public ready: boolean = false;

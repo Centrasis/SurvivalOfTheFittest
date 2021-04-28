@@ -8,12 +8,14 @@ export abstract class GameScene extends Scene {
     private loaded: boolean = false;
     private name: string;
     public gameHandler: GameHandler; 
+    public metaGameInfo: any;
 
     constructor(name: string, engine: Engine, options?: SceneOptions) {
         super(engine, options);
         this.camera = new FreeCamera("camera", new Vector3(0, 0, 0), this);
         this.gui = undefined;
         this.name = name;
+        this.metaGameInfo = {};
     }
 
     public equals(other?: GameScene): boolean {

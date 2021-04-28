@@ -6,7 +6,7 @@ import { EventInfo, GameHandler, HandlerRole, InvokeControllerInfo } from "./Gam
 import { GameGUI } from "./GameGUI";
 import { Controller } from "./Controller";
 import { LoginState, SessionUserInitializer, SVEAccount } from "svebaselib";
-import { IGameHandler, ActionType } from "./GameHandlerBase";
+import { ActionType, IGameHandler, SVEGameServer } from "svegamesapi";
 import { Control, Image, Rectangle, TextBlock, TextWrapping } from "@babylonjs/gui";
 
 
@@ -262,7 +262,7 @@ class Mutation {
 
     public static load(): Promise<Mutation[]> {
         return new Promise<Mutation[]>((resolve, reject) => {
-            fetch("/assets/infos/Mutations.json").then((res) => {
+            fetch(window.location.pathname.substring(0, window.location.pathname.lastIndexOf("/")) + "/assets/infos/Mutations.json").then((res) => {
                 res.json().then(j => {
                     let muts: Mutation[] = [];
                     (j as any[]).forEach(e => {
@@ -531,14 +531,14 @@ class FieldFactory extends SpawnFactory {
 
             if (type !== undefined) {
                 console.log("Spawn field: " + String(this.spawnedMeshes) + " of " + String(this.meshesToSpawn));
-                SceneLoader.ImportMesh("", "/assets/meshes/", "field_chip.obj", this.scene, (meshes) => {
+                SceneLoader.ImportMesh("", window.location.pathname.substring(0, window.location.pathname.lastIndexOf("/")) + "/assets/meshes/", "field_chip.obj", this.scene, (meshes) => {
                     let spawn = meshes[0] as Mesh;
                     spawn.visibility = 0;
                     
                     spawn = new FieldChip(spawnInfo.name, type, this.scene, undefined, meshes[0] as Mesh);
                     spawn.visibility = 1;
                     let mat = new StandardMaterial("", this.scene);
-                    let url = "/assets/textures/" + Helper.fieldType2Str(type) + ".png";
+                    let url = window.location.pathname.substring(0, window.location.pathname.lastIndexOf("/")) + "/assets/textures/" + Helper.fieldType2Str(type) + ".png";
                     mat.diffuseColor = new Color3(1,1,1);
                     mat.specularColor = new Color3(1,1,1);
                     mat.diffuseTexture = new Texture(url, this.scene);
@@ -672,9 +672,9 @@ export class SurvivalOfTheFittestGUI extends GameGUI {
 
     public updateFromPlayer(p: SotFController) {
         if(p.getStrategy() == SpeciesStrategy.R) {
-            this.strategyImg.source = "/assets/textures/StratR.jpg";
+            this.strategyImg.source = window.location.pathname.substring(0, window.location.pathname.lastIndexOf("/")) + "/assets/textures/StratR.jpg";
         } else {
-            this.strategyImg.source = "/assets/textures/StratK.jpg";
+            this.strategyImg.source = window.location.pathname.substring(0, window.location.pathname.lastIndexOf("/")) + "/assets/textures/StratK.jpg";
         }
 
         let s = p.getSpecies();
@@ -683,7 +683,7 @@ export class SurvivalOfTheFittestGUI extends GameGUI {
             let muts = s.mutation.getMutationList();
             let i = 0;
             muts.forEach(element => {
-                let img = new Image(undefined, "/assets/textures/Mutations/" + element.getName() + ".png");
+                let img = new Image(undefined, window.location.pathname.substring(0, window.location.pathname.lastIndexOf("/")) + "/assets/textures/Mutations/" + element.getName() + ".png");
                 img.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
                 img.verticalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
                 img.width = 0.2;
@@ -730,7 +730,7 @@ export class SurvivalOfTheFittestGUI extends GameGUI {
             this.survivalRateText.text = "";
         } else {
             if (m.getClickableType() == ClickableType.Field) {
-                this.infoImg.source = "/assets/textures/" + Helper.fieldType2Str((m as FieldChip).type) + "Info.png";
+                this.infoImg.source = window.location.pathname.substring(0, window.location.pathname.lastIndexOf("/")) + "/assets/textures/" + Helper.fieldType2Str((m as FieldChip).type) + "Info.png";
                 this.infoImg.isVisible = true;
                 this.infoText.text = Helper.getDescriptionOf((m as FieldChip).type);
                 this.survivalRateText.text = "Überlebensbonus: " + String(Math.round(((m as any) as FieldChip).getSurvivalRate(this.owner.getSpecies()) * 100)) + "%";
@@ -1102,11 +1102,10 @@ export class SurvivalOfTheFittestGame extends GameScene implements IFieldProvide
         return list;
     }
 
-    constructor(name: string, species_count: number, engine: Engine, options?: SceneOptions) {
+    constructor(name: string, engine: Engine, options?: SceneOptions) {
         super(name, engine, options);
         this.assetsManager = new AssetsManager(this);
         this.assetsManager.autoHideLoadingUI = false;
-        this.species_count = species_count;
         this.light = new HemisphericLight("HemiLight", new Vector3(0, 1, 0), this);
         this.light.setEnabled(true);
     }
@@ -1335,8 +1334,12 @@ export class SurvivalOfTheFittestGame extends GameScene implements IFieldProvide
 
     public init(gh: GameHandler) {
         super.init(gh);
-        this.gui = new SurvivalOfTheFittestGUI("SotF_GUI", [1920, 1080], this);
-        gh.addUpdateEventListener(this.onUpdateEntity.bind(this));
+        gh.getMetaInfos().then(meta => {
+            this.metaGameInfo = meta;
+            this.species_count = Number(meta.species_count);
+            this.gui = new SurvivalOfTheFittestGUI("SotF_GUI", [1920, 1080], this);
+            gh.addUpdateEventListener(this.onUpdateEntity.bind(this));
+        });
     }
 
     protected onUpdateEntity(target: any, update: UpdateInfo) {

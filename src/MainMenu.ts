@@ -5,7 +5,7 @@ import { SurvivalOfTheFittestGame } from "./SurvivalOfTheFittestGame";
 
 import { AdvancedDynamicTexture, StackPanel, Button, TextBlock, Rectangle, Control, Image, Slider } from "@babylonjs/gui";
 
-class MenuGUI extends GameGUI {
+export class MainMenuGUI extends GameGUI {
     constructor(name: string, resolution: [number, number], onStart: () => void) {
         super(name, resolution);
 
@@ -56,7 +56,7 @@ class MenuGUI extends GameGUI {
     }
 }
 
-class HostMenu extends GameGUI {
+export class HostMenu extends GameGUI {
     constructor(name: string, resolution: [number, number], onMainMenu: () =>  void, onStart: (species_count: number) => void) {
         super(name, resolution);
 
@@ -143,7 +143,7 @@ export class MainMenu extends GameScene {
     }
 
     protected createMainMenu(): GameGUI {
-        return new MenuGUI("MainMenu", 
+        return new MainMenuGUI("MainMenu", 
             [1920, 1080],
             () => {
                 this.gui.dispose();
@@ -160,7 +160,11 @@ export class MainMenu extends GameScene {
                             },
                             (species_count: number) => {
                                 this.gui.dispose();
-                                this.onStartGame(new SurvivalOfTheFittestGame("SotFScene", species_count, this.getEngine()));
+                                let g = new SurvivalOfTheFittestGame("SotFScene", this.getEngine());
+                                g.metaGameInfo = {
+                                    species_count: species_count
+                                };
+                                this.onStartGame(g);
                             }
                 );
     }
