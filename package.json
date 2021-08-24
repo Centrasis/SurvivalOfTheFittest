@@ -14,7 +14,7 @@
     "babylonjs": "^4.2.0",
     "babylonjs-loaders": "^4.2.0",
     "babylonjs-materials": "^4.2.0",
-    "svegamesapi": "git+https://github.com/ftl999/sveGamesAPI.git#0.0.1"
+    "svegamesapi": "git+https://github.com/Centrasis/sveGamesAPI.git#0.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.13.14",
@@ -28,7 +28,7 @@
     "clean-webpack-plugin": "^3.0.0",
     "html-loader": "^1.1.0",
     "html-webpack-plugin": "^4.3.0",
-    "svebaselib": "git+https://github.com/ftl999/sveBaseLib.git#0.8.0",
+    "svebaselib": "git+https://github.com/Centrasis/sveBaseLib.git#0.8.0",
     "ts-loader": "^7.0.5",
     "typescript": "^3.9.5",
     "webpack": "^4.43.0",
